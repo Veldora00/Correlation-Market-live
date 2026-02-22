@@ -12,9 +12,7 @@ APP_MODE = os.getenv("APP_MODE", "sim").strip().lower()  # sim | chain | live
 IS_LIVE_MODE = APP_MODE == "live"
 IS_CHAIN_MODE = APP_MODE == "chain"
 
-RUN_BOTS = os.getenv("RUN_BOTS", "0") == "1"
-ENABLE_BOT_TRADING = os.getenv("ENABLE_BOT_TRADING", "1" if (RUN_BOTS and APP_MODE == "sim") else "0") == "1"
-ENABLE_SIMULATION_ENDPOINTS = os.getenv("ENABLE_SIMULATION_ENDPOINTS", "1" if APP_MODE == "sim" else "0") == "1"
+
 MARKET_DURATION_SECONDS = int(os.getenv("MARKET_DURATION_SECONDS", "3600" if (IS_LIVE_MODE or IS_CHAIN_MODE) else "60"))
 
 # CHAIN mode signer configuration
