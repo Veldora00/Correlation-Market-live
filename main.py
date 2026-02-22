@@ -5,23 +5,20 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 import engine_lmsr as engine
-from bot_simulator import _make_bots, run_live_bot_tick, run_market_bot_simulation
 from config import (
     ALLOWED_ORIGINS,
     APP_MODE,
     CHAIN_ID,
     CONTRACT_ADDRESS,
-    ENABLE_SIMULATION_ENDPOINTS,
     FREEZE_WINDOW,
     MARKET_DURATION_SECONDS,
     QUOTE_TTL_SECONDS,
-    RUN_BOTS,
     SCALING,
     SIGNER_PRIVATE_KEY,
 )
 from ledger import LEDGER
 from market_registry import create_next_market, get_all_active_markets, get_lock, get_market
-from models import Outcome, QuoteRequest, QuoteResponse, SimulationRequest, TradeRequest
+from models import Outcome, QuoteRequest, QuoteResponse, TradeRequest
 from oracle import ORACLE_CACHE
 from vault import VAULT
 
@@ -35,7 +32,6 @@ app.add_middleware(
 )
 
 BALANCE_LOCK = asyncio.Lock()
-BOT_SWARM = _make_bots(max_shares=20)
 
 OUTCOME_TO_UINT8 = {
     Outcome.YY: 0,
@@ -70,38 +66,7 @@ async def startup():
     asyncio.create_task(ORACLE_CACHE.loop())
     await asyncio.sleep(2)
     asyncio.create_task(lifecycle_manager())
-    if RUN_BOTS and APP_MODE == "sim":
-        asyncio.create_task(bot_manager())
-
-
-async def bot_manager():
-    """Background task: Bots trade every 3 seconds"""
-    print("🤖 Bot Swarm Activated")
-    while True:
-        try:
-            await asyncio.sleep(3.0)
-            active_ids = get_all_active_markets()
-
-            for mid in active_ids:
-                spec, state = get_market(mid)
-
-                if time.time() > (spec.expiry_ts - FREEZE_WINDOW):
-                    continue
-
-                lock = get_lock(mid)
-                async with lock:
-                    async with BALANCE_LOCK:
-                        for bot in BOT_SWARM:
-                            current_balance = VAULT.balances.get(bot.user_id, 0)
-                            if current_balance < 10_000 * SCALING:
-                                VAULT.balances[bot.user_id] = current_balance + 100_000 * SCALING
-
-                        trades = await run_live_bot_tick(mid, spec, state, VAULT, BOT_SWARM)
-
-                        if trades > 0:
-                            print(f"🤖 Bots just made {trades} trades on {mid}")
-        except Exception as e:
-            print(f"Bot Error: {e}")
+   
 
 
 async def lifecycle_manager():
@@ -241,29 +206,6 @@ async def quote_endpoint(market_id: str, req: QuoteRequest):
     )
 
 
-@app.post("/markets/{market_id}/simulate-bots")
-async def simulate_bots_endpoint(market_id: str, req: SimulationRequest):
-    if not ENABLE_SIMULATION_ENDPOINTS:
-        raise HTTPException(403, "Simulation endpoint disabled in current mode")
-    if req.market_id != market_id:
-        raise HTTPException(400, "Path market_id must match request body market_id")
-
-    try:
-        spec, state = get_market(market_id)
-    except KeyError:
-        raise HTTPException(404, "Market not found")
-
-    summary = run_market_bot_simulation(
-        spec=spec,
-        initial_state=state,
-        steps=req.steps,
-        starting_balance=req.starting_balance * SCALING,
-        max_shares_per_trade=req.max_shares_per_trade,
-        seed=req.seed,
-    )
-
-    return {"market_id": market_id, "simulation": summary}
-
 
 @app.get("/markets")
 async def list_markets():
@@ -287,6 +229,16 @@ async def get_market_info(market_id: str):
         "seconds_left": max(0, int(spec.expiry_ts - time.time())),
         "targets": spec.targets,
     }
+
+@app.get("/health")
+async def health():
+    return {
+        "oracle_healthy": ORACLE_CACHE.is_healthy,
+        "oracle_stale": ORACLE_CACHE.is_stale(max_age=5.0),
+        "active_markets": len(get_all_active_markets()),
+    }
+
+
 
 
 if __name__ == "__main__":
