@@ -57,9 +57,3 @@ class QuoteResponse(BaseModel):
     signature: str
 
 
-class SimulationRequest(BaseModel):
-    market_id: str
-    steps: int = Field(default=50, ge=1, le=500)
-    max_shares_per_trade: int = Field(default=40, ge=1, le=2_000)
-    starting_balance: int = Field(default=100_000, ge=100)
-    seed: int | None = 7
