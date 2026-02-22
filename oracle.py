@@ -36,12 +36,17 @@ class Oracle:
                         client.get(BTC_ORACLE_URL),
                         client.get(ETH_ORACLE_URL),
                     )
+                    r1.raise_for_status()
+                    r2.raise_for_status()
 
                     btc = float(r1.json()["markPrice"])
                     eth = float(r2.json()["markPrice"])
 
                     if btc < 1000 or btc > 500000:
                         raise ValueError("Bad BTC price")
+
+                    if eth < 100 or eth > 100000:
+                        raise ValueError("Bad ETH price")
 
                     self.prices["BTC"] = btc
                     self.prices["ETH"] = eth
