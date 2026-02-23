@@ -48,7 +48,7 @@ class QuoteRequest(BaseModel):
 
 class QuoteResponse(BaseModel):
     user: str
-    market_id: str
+    market_id: str  # keccak256 hex hash of the market ID (0x...), matches bytes32 in Solidity
     outcome: int
     shares: int
     total_cost_micros: int

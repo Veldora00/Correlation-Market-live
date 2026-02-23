@@ -14,7 +14,7 @@ Q_FLOOR = int(os.getenv("Q_FLOOR", "-5000"))
 MAX_OI_PER_OUTCOME = int(os.getenv("MAX_OI_PER_OUTCOME", "20000"))
 TRADES_FILE = os.getenv("TRADES_FILE", "trades.csv")
 FREEZE_WINDOW = int(os.getenv("FREEZE_WINDOW", "15"))
-QUOTE_TTL_SECONDS = int(os.getenv("QUOTE_TTL_SECONDS", "10"))
+QUOTE_TTL_SECONDS = int(os.getenv("QUOTE_TTL_SECONDS", "300"))
 MARKET_DURATION_SECONDS = 3600 
 
 # --- Helpers ---
