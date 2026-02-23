@@ -50,9 +50,9 @@ DOMAIN_DATA = {
 MESSAGE_TYPES = {
     "Quote": [
         {"name": "user", "type": "address"},
-        {"name": "marketId", "type": "string"},
+        {"name": "marketId", "type": "bytes32"}, # Changed from string to bytes32
         {"name": "outcome", "type": "uint8"},
-        {"name": "shares", "type": "int256"},
+        {"name": "shares", "type": "uint256"},  # Changed from int256 to uint256
         {"name": "totalCost", "type": "uint256"},
         {"name": "nonce", "type": "uint256"},
         {"name": "deadline", "type": "uint256"},
