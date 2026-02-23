@@ -174,10 +174,11 @@ async def quote_endpoint(market_id: str, req: QuoteRequest):
     total_cost_micros = int(round(delta * SCALING))
     deadline = int(time.time()) + QUOTE_TTL_SECONDS
     outcome_id = OUTCOME_TO_UINT8[req.outcome]
+    market_id_bytes = keccak(text=market_id)
 
     message_data = {
         "user": req.user,
-        "marketId": req.market_id,
+        "marketId": market_id_bytes, # Use the bytes version here
         "outcome": outcome_id,
         "shares": int(req.amount_shares),
         "totalCost": total_cost_micros,
