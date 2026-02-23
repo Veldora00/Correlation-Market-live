@@ -1,6 +1,9 @@
 import asyncio
 import time
 
+from eth_account import Account
+from eth_account.messages import encode_typed_data
+from eth_utils import keccak
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -67,7 +70,6 @@ async def startup():
     await asyncio.sleep(2)
     asyncio.create_task(lifecycle_manager())
    
-
 
 async def lifecycle_manager():
     """Background task that manages ALL active markets."""
@@ -186,12 +188,6 @@ async def quote_endpoint(market_id: str, req: QuoteRequest):
         "deadline": deadline,
     }
 
-    try:
-        from eth_account import Account
-        from eth_account.messages import encode_typed_data
-    except Exception as exc:
-        raise HTTPException(500, f"eth-account dependency unavailable: {exc}")
-
     signable = encode_typed_data(DOMAIN_DATA, MESSAGE_TYPES, message_data)
     signed = Account.sign_message(signable, private_key=SIGNER_PRIVATE_KEY)
 
@@ -205,7 +201,6 @@ async def quote_endpoint(market_id: str, req: QuoteRequest):
         deadline=deadline,
         signature="0x" + signed.signature.hex(),
     )
-
 
 
 @app.get("/markets")
@@ -238,7 +233,6 @@ async def health():
         "oracle_stale": ORACLE_CACHE.is_stale(max_age=5.0),
         "active_markets": len(get_all_active_markets()),
     }
-
 
 
 
