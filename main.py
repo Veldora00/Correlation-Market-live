@@ -169,6 +169,14 @@ async def quote_endpoint(market_id: str, req: QuoteRequest):
     except KeyError:
         raise HTTPException(404, "Market not found")
 
+    # Guard: reject quotes for frozen/expired markets
+    if time.time() > (spec.expiry_ts - FREEZE_WINDOW):
+        raise HTTPException(400, "Market Frozen: quote rejected")
+
+    # Guard: reject quotes when oracle is stale or unhealthy
+    if ORACLE_CACHE.is_stale(max_age=5.0) or not ORACLE_CACHE.is_healthy:
+        raise HTTPException(503, "Oracle Unstable/Stale: quote rejected")
+
     delta = cost_after - cost_before
     if delta < 0:
         raise HTTPException(400, "Negative quote cost is not supported")
@@ -193,7 +201,7 @@ async def quote_endpoint(market_id: str, req: QuoteRequest):
 
     return QuoteResponse(
         user=req.user,
-        market_id=req.market_id,
+        market_id="0x" + market_id_bytes.hex(),
         outcome=outcome_id,
         shares=req.amount_shares,
         total_cost_micros=total_cost_micros,
