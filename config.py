@@ -11,8 +11,7 @@ MAX_OI_PER_OUTCOME = int(os.getenv("MAX_OI_PER_OUTCOME", "20000"))
 TRADES_FILE = os.getenv("TRADES_FILE", "trades.csv")
 FREEZE_WINDOW = int(os.getenv("FREEZE_WINDOW", "15"))
 
-# Runtime mode switches
-APP_MODE = os.getenv("APP_MODE", "sim").strip().lower()  # sim | chain | live
+
 IS_LIVE_MODE = APP_MODE == "live"
 IS_CHAIN_MODE = APP_MODE == "chain"
 
